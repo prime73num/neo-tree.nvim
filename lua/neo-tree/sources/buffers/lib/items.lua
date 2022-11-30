@@ -49,10 +49,10 @@ M.get_open_buffers = function(state)
     else
       local rootsub = path:sub(1, #state.path)
       -- make sure this is within the root path
+      local is_loaded = vim.api.nvim_buf_is_loaded(b)
+      local is_listed = vim.fn.buflisted(b)
       if rootsub == state.path then
-        local is_loaded = vim.api.nvim_buf_is_loaded(b)
         if is_loaded or state.show_unloaded then
-          local is_listed = vim.fn.buflisted(b)
           if is_listed == 1 then
             local success, item = pcall(file_items.create_item, context, path, "file")
             if success then
@@ -66,23 +66,28 @@ M.get_open_buffers = function(state)
           end
         end
       else
-        local length = #path > 2
-        local name = vim.fn.fnamemodify(path, ":t")
-        local dir = vim.fn.fnamemodify(path, ":p:~:h")
-        if length then
-          local item = {
-            name = name.." <|> "..dir,
-            ext = "not_in_cwd",
-            path = path,
-            id = path,
-            type = "file",
-            loaded = true,
-            extra = {
-              bufnr = b,
-              is_listed = true,
-            },
-          }
-          table.insert(not_in_cwd, item)
+        if is_loaded or state.show_unloaded then
+          if is_listed == 1 then
+            local length = #path > 2
+            local name = vim.fn.fnamemodify(path, ":t")
+            local dir = vim.fn.fnamemodify(path, ":p:~:h")
+            local ext = vim.fn.fnamemodify(path, ":e")
+            if length then
+              local item = {
+                name = name.." <|> "..dir,
+                ext = ext,
+                path = path,
+                id = path,
+                type = "file",
+                loaded = true,
+                extra = {
+                  bufnr = b,
+                  is_listed = true,
+                },
+              }
+              table.insert(not_in_cwd, item)
+            end
+          end
         end
       end
     end
